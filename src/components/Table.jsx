@@ -4,7 +4,6 @@ import Canva from './Canva';
 
 export default function Table({ blueprints, totalOfPoints, author }) {
     const [selectedBP,setBP] = useState();
-    const [pointsBP, setPoints] = useState([]);
     const handleclick = (bp) => {
         setBP(bp);
     }
@@ -13,7 +12,7 @@ export default function Table({ blueprints, totalOfPoints, author }) {
         <div className="row align-items-start">
             <div className="col-md-6">
                 <h2>{author} blueprints</h2>
-                <table class="table">
+                <table className="table">
                     <thead>
                         <tr>
                         <th scope="col">Blueprint Name</th>
@@ -26,7 +25,7 @@ export default function Table({ blueprints, totalOfPoints, author }) {
                     <tr key={index}>
                     <th scope="row">{bp.name}</th>
                     <td>{bp.points.length}</td>
-                    <td><button type="button" class="btn btn-outline-primary" onClick={() => handleclick(bp)}>Open</button></td>
+                    <td><button type="button" className="btn btn-outline-primary" onClick={() => handleclick(bp)}>Open</button></td>
                     </tr>
                     ))}
                     </tbody>

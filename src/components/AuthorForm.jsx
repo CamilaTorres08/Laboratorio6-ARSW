@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import * as serviceBP from './Services/Service.ts';
+import apiclient from './Services/apiclient.js';
 import Table from './Table.jsx';
 import ReactDOM from "react-dom/client";
 import apimock from './Services/apimock.js';
-
+let root;
 export default function AuthorForm() {
   const [author, setAuthor] = useState(""); 
-  
   const handleInputChange = (event) => {
     setAuthor(event.target.value); 
   };
@@ -15,21 +14,29 @@ export default function AuthorForm() {
     getBlueprint();
   };
 
-  const [api, setApi] = useState(serviceBP); 
+  //Cambiar entre apimock o apiclient para las solicitudes:
+  const [api, setApi] = useState(apiclient); 
  
+  //Función para obtener el blueprint por autor
   const getBlueprint = () => {
     if(author){
       var func = function(response){
-        const totalPoints = response.reduce((acc, bp) => acc + bp.points.length, 0);
-        putTable(response, totalPoints, author);
+        if(response){
+          const totalPoints = response.reduce((acc, bp) => acc + bp.points.length, 0);
+          putTable(response, totalPoints, author);
+        }else{
+          alert("Author not found");
+        }
       }
-
       const response = api.getBlueprintsByAuthor(author, func);
     }
   }  
+  //Función para añadir la tabla con los blueprints
   const putTable = (blueprintsList, total, author) => {
     const oldDiv = document.getElementById("table");
-    const root = ReactDOM.createRoot(oldDiv);
+    if(!root){
+      root = ReactDOM.createRoot(oldDiv);
+    }
     root.render(<Table blueprints={blueprintsList} totalOfPoints={total} author={author} />);
   }
     return (
