@@ -8,6 +8,7 @@ export default function Table({ blueprints, totalOfPoints, author }) {
     const handleclick = (bp) => {
         setBP(bp);
     }
+
     return (
         <div className="row align-items-start">
             <div className="col-md-6">

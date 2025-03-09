@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as serviceBP from './Services/Service.ts';
 import Table from './Table.jsx';
 import ReactDOM from "react-dom/client";
+import apimock from './Services/apimock.js';
 
 export default function AuthorForm() {
   const [author, setAuthor] = useState(""); 
@@ -13,15 +14,17 @@ export default function AuthorForm() {
   const handleClick = () => {
     getBlueprint();
   };
-  const getBlueprint = async () => {
+
+  const [api, setApi] = useState(serviceBP); 
+ 
+  const getBlueprint = () => {
     if(author){
-      const response = await serviceBP.getBlueprintsByAuthor(author);
-      if(response.data.code !== 200){
-        alert(response.data.description);
-        return;
+      var func = function(response){
+        const totalPoints = response.reduce((acc, bp) => acc + bp.points.length, 0);
+        putTable(response, totalPoints, author);
       }
-      const totalPoints = response.data.description.reduce((acc, bp) => acc + bp.points.length, 0);
-      putTable(response.data.description, totalPoints, author);
+
+      const response = api.getBlueprintsByAuthor(author, func);
     }
   }  
   const putTable = (blueprintsList, total, author) => {
