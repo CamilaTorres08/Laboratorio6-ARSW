@@ -1,36 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import apiclient from './Services/apiclient.js';
 import Table from './Table.jsx';
 import ReactDOM from "react-dom/client";
-import apimock from './Services/apimock.js';
+import blueprint from './Services/blueprints.js';
+
 let root;
 export default function AuthorForm() {
-  const [author, setAuthor] = useState(""); 
+  const [authorInput, setAuthorInput] = useState(""); 
   const handleInputChange = (event) => {
-    setAuthor(event.target.value); 
+    setAuthorInput(event.target.value); 
   };
-
   const handleClick = () => {
-    getBlueprint();
+    blueprint.getBlueprint(authorInput,putTable);
   };
-
-  //Cambiar entre apimock o apiclient para las solicitudes:
-  const [api, setApi] = useState(apiclient); 
- 
-  //Función para obtener el blueprint por autor
-  const getBlueprint = () => {
-    if(author){
-      var func = function(response){
-        if(response){
-          const totalPoints = response.reduce((acc, bp) => acc + bp.points.length, 0);
-          putTable(response, totalPoints, author);
-        }else{
-          alert("Author not found");
-        }
-      }
-      const response = api.getBlueprintsByAuthor(author, func);
-    }
-  }  
   //Función para añadir la tabla con los blueprints
   const putTable = (blueprintsList, total, author) => {
     const oldDiv = document.getElementById("table");
@@ -51,7 +32,7 @@ export default function AuthorForm() {
               className="form-control form-control-lg w-100"
               id="colFormLabelLg"
               placeholder="Enter author's name"
-              value={author}
+              value={authorInput}
               onChange={handleInputChange}
             />
           </div>
