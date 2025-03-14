@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Canva from './Canva';
-
+import blueprint from './Services/blueprints.js'
 
 export default function Table({ blueprints, totalOfPoints, author }) {
     const [selectedBP,setBP] = useState();
     const handleclick = (bp) => {
-        setBP(bp);
+         blueprint.getBlueprintAuthorAndName(bp.name,setBP);
     }
-
     return (
         <div className="row align-items-start">
             <div className="col-md-6">
@@ -24,7 +23,7 @@ export default function Table({ blueprints, totalOfPoints, author }) {
                     {blueprints.map((bp, index) => (
                     <tr key={index}>
                     <th scope="row">{bp.name}</th>
-                    <td>{bp.points.length}</td>
+                    <td>{bp.points}</td>
                     <td><button type="button" className="btn btn-outline-primary" onClick={() => handleclick(bp)}>Open</button></td>
                     </tr>
                     ))}

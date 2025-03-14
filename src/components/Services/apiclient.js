@@ -15,16 +15,16 @@ const apiclient = (function () {
         }
     },
 
-        getBlueprintsByAuthorAndName: async function(author, name, callback){
-        try {
-            const r = await axios.get(API+author+"/"+name);
-            if(r && r.data) {
-                callback(r.data.description);
-            } 
-        } catch (error) {
-            alert(error.data);
-        }
-        }
+        getBlueprintsByNameAndAuthor: async function(author, name, callback){
+            try {
+                const r = await axios.get(API+author+"/"+name);
+                if(r && r.data) {
+                    callback(r.data.description);
+                } 
+            } catch (error) {
+                alert(error.data);
+            }
+            }
     }
 })();
 
