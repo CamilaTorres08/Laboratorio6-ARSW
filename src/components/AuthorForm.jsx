@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Table from './Table.jsx';
 import ReactDOM from "react-dom/client";
 import blueprint from './Services/blueprints.js';
-
 let root;
 export default function AuthorForm() {
   const [authorInput, setAuthorInput] = useState(""); 
@@ -10,7 +9,7 @@ export default function AuthorForm() {
     setAuthorInput(event.target.value); 
   };
   const handleClick = () => {
-    blueprint.getBlueprint(authorInput,putTable);
+    getBlueprints();
   };
   //Función para añadir la tabla con los blueprints
   const putTable = (blueprintsList, total, author) => {
@@ -18,7 +17,30 @@ export default function AuthorForm() {
     if(!root){
       root = ReactDOM.createRoot(oldDiv);
     }
-    root.render(<Table blueprints={blueprintsList} totalOfPoints={total} author={author} />);
+    root.render(<Table 
+      blueprints={blueprintsList} 
+      totalOfPoints={total} 
+      author={author} 
+      saveBlueprint={saveBP} 
+      blueprintModule={blueprint}
+      createBlueprint={createNewBP}
+      deleteBlueprint={deleteBP}/>);
+  }
+  const getBlueprints = async () => {
+    blueprint.setAuthor(authorInput);
+    await blueprint.getBlueprint(putTable);
+  }
+  const saveBP = async () => {
+    await blueprint.saveBlueprint();
+    getBlueprints();
+  }
+  const createNewBP = async () => {
+    await blueprint.createBlueprint();
+    getBlueprints();
+  }
+  const deleteBP = async (setBP) => {
+    await blueprint.deleteBlueprint(setBP);
+    getBlueprints();
   }
     return (
       <div id="user-container">
@@ -42,6 +64,7 @@ export default function AuthorForm() {
         </div>
         <div id="table"></div>
         </div>
+        
       );
       
 }
