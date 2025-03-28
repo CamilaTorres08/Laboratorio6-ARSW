@@ -2,21 +2,35 @@ import React, { useEffect, useState } from 'react';
 import Canva from './Canva';
 import Form from './Form';
 
-export default function Table({ blueprints, totalOfPoints, author, saveBlueprint, blueprintModule, createBlueprint, deleteBlueprint }) {
+export default function Table({ blueprints, totalOfPoints, author, saveBlueprint, blueprintModule, createBlueprint, deleteBlueprint, sendPoint, onBlueprintSelect }) {
     const [selectedBP,setBP] = useState();
     const [isNew, setIsNew] = useState(false);
-    const handleclick = (bp) => {
-        blueprintModule.getBlueprintAuthorAndName(bp.name, setBP);
-    }
+
+    const handleclick = async (bp) => { // <- Haz la función asíncrona
+        try {
+          const newBP = await new Promise((resolve, reject) => {
+            blueprintModule.getBlueprintAuthorAndName(
+              bp.name,
+              (response) => resolve(response),
+              (error) => reject(error)
+            );
+          });
+          
+          if (newBP) {
+            setBP(newBP);
+            onBlueprintSelect(newBP); // <- Asegura que se ejecute después de obtener los datos
+          }
+        } catch (error) {
+          console.error("Error fetching blueprint:", error);
+        }
+      };
     const updateBP = () => {
+        console.log("Updating blueprint");
         setBP(blueprintModule.getCurrentBlueprint());
     }
     const saveBP = () => {
-        if(isNew){
-            createBlueprint();
-        }else{
-            saveBlueprint();
-        }
+        console.log("Saving blueprint");  
+        isNew ? createBlueprint() : saveBlueprint();
         setIsNew(false);
     }
     const deleteBP = () => {
@@ -53,8 +67,9 @@ export default function Table({ blueprints, totalOfPoints, author, saveBlueprint
                 {selectedBP &&
                 <div className="d-flex flex-column gap-2">
                     <h3>Current blueprint: {selectedBP.name}</h3>
-                    <Canva blueprint={selectedBP} updatePoints={blueprintModule.addPointsToBP}/>
-                    <div class="d-grid gap-2 d-md-flex"> 
+                    <Canva blueprint={selectedBP} updatePoints={blueprintModule.addPointsToBP} 
+                    sendPoint={sendPoint}/>
+                    <div className="d-grid gap-2 d-md-flex"> 
                     <button type="button" className={isNew ? "btn btn-success" : "btn btn-warning"} onClick={saveBP}>
                         {isNew ? "Create Blueprint" : "Update Blueprint"}
                     </button>

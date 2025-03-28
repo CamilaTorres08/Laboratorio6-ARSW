@@ -36,74 +36,79 @@ const blueprint = (() => {
         table(blueprintsList, totalPoints, author);
     };
     //Método para obtener el blueprint basado en el autor y el nombre
-    const getBlueprintAuthorAndName = async (name,setBP) => {
-        if(author){
-            const func = (response) => {
-                if(response){
-                  currentBlueprint=response;
-                  setBP(response);
-                }else{
-                  currentBlueprint=null;
-                  setBP(null);
-                  alert("Author not found");
-                }
-            }
-            await api.getBlueprintsByNameAndAuthor(author,name,func);
-        }
+    const getBlueprintAuthorAndName = async (name, successCallback, errorCallback) => {
+      if (!author) {
+        errorCallback("Autor no definido");
+        return;
       }
+      
+      try {
+        await api.getBlueprintsByNameAndAuthor(
+          author,
+          name,
+          (response) => successCallback(response), // <- Éxito
+          (error) => errorCallback(error) // <- Error
+        );
+      } catch (e) {
+        errorCallback(e.message);
+      }
+    };
 
     //Método para actualizar el plano 
-    const saveBlueprint = async () => {
-      if(author){
+// Modifica saveBlueprint para enviar solo los puntos
+    const saveBlueprint = async (putTable) => {
+      if (author && currentBlueprint) {
           const func = (response) => {
-              if(response){
-                currentBlueprint = response;
-                alert("Update successfully");
-              }else{
-                currentBlueprint=null;
-                alert("Cannot update");
+              if (response) {
+                  currentBlueprint = response;
+                  alert("Update successfully");
+                  getBlueprint(putTable); // ← Recarga la lista
+              } else {
+                  alert("Cannot update");
               }
-          }
-          if(currentBlueprint){
-            await api.updateBlueprint(author, currentBlueprint.name, currentBlueprint, func);
-          }
-      }
-    }
+          };
+          // Envía solo los puntos, no todo el blueprint
+          await api.updateBlueprint(
+            author,
+            currentBlueprint.name, 
+            {
+              author: author,
+              name: currentBlueprint.name,
+              points: currentBlueprint.points
+            }, 
+            func
+          );
+        }
+    };
 
     //Método para crear un plano 
-    const createBlueprint = async () => {
-      if(author){
-          const func = (response) => {
-              if(response){
-                currentBlueprint = response;
-                alert("Blueprint Created successfully");
-              }else{
-                currentBlueprint = null;
-                alert("Cannot create");
-              }
+    const createBlueprint = async (putTable) => { 
+      if (author && currentBlueprint) {
+        const func = (response) => {
+          if (response) {
+            currentBlueprint = response;
+            alert("¡Creado correctamente!");
+            getBlueprint(putTable);
           }
-          if(currentBlueprint){
-            await api.createBlueprint(currentBlueprint, func);
-          }
+        };
+        await api.createBlueprint(currentBlueprint, func);
       }
-    }
+    };
     //Método para borrar un plano 
-    const deleteBlueprint = async (setBP) => {
-      if(author){
-          const func = (response) => {
-              if(response){
-                currentBlueprint = null;
-                setBP(null);
-                alert("Blueprint delete successfully");
-              }else{
-                alert("Cannot delete");
-              }
+    const deleteBlueprint = async (setBP, putTable) => {
+      if (author && currentBlueprint) {
+        const func = (response) => {
+          if (response) {
+            currentBlueprint = null;
+            setBP(null);
+            alert("¡Borrado correctamente!");
+            getBlueprint(putTable); // ← Recarga la lista
           }
-          if(currentBlueprint){
-            await api.deleteBlueprint(author,currentBlueprint.name, func);
-          }
+        };
+        await api.deleteBlueprint(author, currentBlueprint.name, func);
       }
-    }
+    };
+    
     const getCurrentBlueprint = () => {
       return currentBlueprint;
     }

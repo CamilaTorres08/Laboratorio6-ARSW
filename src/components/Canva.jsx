@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 
-const Canva = ({ blueprint, updatePoints }) => {
+const Canva = ({ blueprint, updatePoints, sendPoint}) => {
   const [points, setPoints] = useState([]);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -16,13 +16,23 @@ const Canva = ({ blueprint, updatePoints }) => {
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
+
   const handlePointer = (event) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const x = (event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
     const y = (event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
-    setPoints((prevPoints) => [...prevPoints, {x,y}]);
+
+    const newPoint = {x, y};
+
+    setPoints((prevPoints) => [...prevPoints, newPoint]);
+
+    if (sendPoint) {
+      console.log("Enviando punto: ", newPoint);
+      sendPoint(x, y);
+    }
   };  
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -46,8 +56,13 @@ const Canva = ({ blueprint, updatePoints }) => {
   }, [points, blueprint, canvasSize]); 
 
   useEffect(() => {
-    setPoints([...blueprint.points]);
+    if (blueprint?.points) { // <- Validación clave
+      setPoints([...blueprint.points]);
+    } else {
+      setPoints([]); // Inicializa como array vacío si no hay puntos
+    }
   }, [blueprint]);
+
   useEffect(() => {
     updatePoints(points);
   }, [points]);
