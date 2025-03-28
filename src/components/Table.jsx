@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Canva from './Canva';
 import Form from './Form';
 
-export default function Table({ blueprints, totalOfPoints, author, saveBlueprint, blueprintModule, createBlueprint, deleteBlueprint, sendPoint, onBlueprintSelect }) {
+export default function Table({ blueprints, totalOfPoints, author, saveBlueprint, blueprintModule, createBlueprint, deleteBlueprint, sendPoint, onBlueprintSelect, selectedBlueprint }) {
     const [selectedBP,setBP] = useState();
     const [isNew, setIsNew] = useState(false);
 
@@ -64,10 +64,10 @@ export default function Table({ blueprints, totalOfPoints, author, saveBlueprint
             </div>
             <div className="col-md-6">
             <Form author={author} setBP={blueprintModule.setCurrentBlueprint} updateBP={updateBP} setNew={setIsNew}/>
-                {selectedBP &&
+                {selectedBlueprint &&
                 <div className="d-flex flex-column gap-2">
-                    <h3>Current blueprint: {selectedBP.name}</h3>
-                    <Canva blueprint={selectedBP} updatePoints={blueprintModule.addPointsToBP} 
+                    <h3>Current blueprint: {selectedBlueprint.name}</h3>
+                    <Canva blueprint={selectedBlueprint} updatePoints={blueprintModule.addPointsToBP} 
                     sendPoint={sendPoint}/>
                     <div className="d-grid gap-2 d-md-flex"> 
                     <button type="button" className={isNew ? "btn btn-success" : "btn btn-warning"} onClick={saveBP}>

@@ -65,7 +65,11 @@ const Canva = ({ blueprint, updatePoints, sendPoint}) => {
 
   useEffect(() => {
     updatePoints(points);
+    console.log("se recibio el cambio en canvas");
   }, [points]);
+  
+
+  
 
   return (
     <div ref={containerRef} style={{ width: "100%", maxWidth: "800px", margin: "auto" }}>

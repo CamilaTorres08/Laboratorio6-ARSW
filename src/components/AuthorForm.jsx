@@ -25,13 +25,6 @@ export default function AuthorForm() {
    //   setSelectedBlueprint([selectetBP]);
    // }
   //}, [selectetBP]);
-
-  useEffect(() => {
-    selectedBlueprintRef.current = selectedBlueprint;
-  }, [selectedBlueprint]);
-
-
-
   // Cuando se tenga un autor y un blueprint seleccionado, se construye el tópico dinámico.
   useEffect(() => {
     if (authorInput && selectedBlueprint) {
@@ -44,9 +37,6 @@ export default function AuthorForm() {
     }
   }, [authorInput, selectedBlueprint]);
 
-  useEffect(() => {
-    console.log("Blueprint seleccionado:", selectedBlueprint);
-  }, [selectedBlueprint]);
 
   // Inicia la conexión STOMP solo cuando dynamicTopic tenga valor.
   useEffect(() => {
@@ -54,6 +44,12 @@ export default function AuthorForm() {
       console.log("No topic provided, no connection");
       return;
     }
+    if (stompClient) {
+      console.log("Ya estamos conectados a STOMP, no es necesario reconectar.");
+      return;
+    }
+
+
     console.log("Conectando a STOMP en topic:", dynamicTopic);
     const socket = new SockJS("http://localhost:8080/stompendpoint");
     const client = new Client({
@@ -61,21 +57,32 @@ export default function AuthorForm() {
       reconnectDelay: 5000,
       onConnect: (frame) => {
         console.log("Conectado a STOMP:", frame);
+            // Desuscribirse de cualquier suscripción anterior
+            if (stompClient && stompClient.connected) {
+              console.log("Ya estamos conectados a STOMP, no es necesario reconectar.");
+              return;
+            }
         client.subscribe(dynamicTopic, (message) => {
-          console.log("Mensaje recibido en topic:", dynamicTopic, message.body);
           try {
             const newPoint = JSON.parse(message.body);
-            // Actualiza el estado global de puntos
-            setPoints((prevPoints) => [...prevPoints, newPoint]);
+            setSelectedBlueprint(prevBP => {
+              if (!prevBP) return prevBP;
+              const updatedPoints = [...prevBP.points, newPoint];
+              const updatedBP = { ...prevBP, points: updatedPoints };
+              blueprint.setCurrentBlueprint(updatedBP); // Sincronizar módulo
+              return updatedBP;
+            });
           } catch (e) {
             console.error("Error al parsear el mensaje:", e);
           }
         });
       },
+      
       onStompError: (frame) => {
         console.error("Error en STOMP:", frame);
       },
     });
+    console.log("active al cliente")
     client.activate();
     setStompClient(client);
 
@@ -122,9 +129,25 @@ export default function AuthorForm() {
   };
 
   const handleBlueprintSelect = (bp) => {
-    blueprint.setCurrentBlueprint(bp); 
-    setSelectedBlueprint(bp);
+    setSelectedBlueprint({ ...bp });
+    setPoints([...bp.points]);  
+    
   }
+  useEffect(() => {
+    console.log("selectedref",selectedBlueprint)
+    selectedBlueprintRef.current = selectedBlueprint;
+  }, [selectedBlueprint]);
+
+
+  useEffect(() => {
+    if (selectedBlueprint) {
+      console.log("Blueprint seleccionado:", selectedBlueprint);
+      setPoints((prevPoints) => [...selectedBlueprint.points]);
+      
+      blueprint.setCurrentBlueprint(selectedBlueprint); 
+      console.log(points);
+    }
+  }, [selectedBlueprint]); 
 
   // Función para obtener la lista de blueprints del autor.
   const getBlueprints = async () => {
@@ -182,6 +205,7 @@ export default function AuthorForm() {
         deleteBlueprint={deleteBP}
         sendPoint={sendPoint}
         onBlueprintSelect={handleBlueprintSelect}
+        selectedBlueprint={selectedBlueprint}
       />
     </div>
   );
