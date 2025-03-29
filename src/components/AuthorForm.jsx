@@ -5,19 +5,21 @@ import Table from "./Table.jsx";
 import blueprint from "./Services/blueprints.js";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-
+import Canva from "./Canva";
 let root;
 
 export default function AuthorForm() {
   const [authorInput, setAuthorInput] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState(null);
   const [dynamicTopic, setDynamicTopic] = useState(null);
+  const [polygonTopic, setPolygonTopic] = useState(null);
   const [points, setPoints] = useState([]);
   const [stompClient, setStompClient] = useState(null);
   const selectedBlueprintRef = useRef();
   const [blueprintsList, setBlueprintsList] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
   const [drawingId, setDrawingId] = useState("");
+  const [polygonPoints, setPolygonPoints] = useState([]);
   const [isConnected, setIsConnected] = useState(false);  // Para controlar la conexión
 
   const handleDrawingIdChange = (event) => {
@@ -27,9 +29,11 @@ export default function AuthorForm() {
     if (authorInput && drawingId) {
       const topic = `/topic/newpoint.${drawingId}`;
       setDynamicTopic(topic);
+
       console.log("Dynamic topic updated:", topic);
     }
   }, [authorInput, drawingId]);
+  
 
   const handleConnect = () => {
     if (selectedBlueprint && drawingId) {
@@ -49,7 +53,7 @@ export default function AuthorForm() {
     }
 
     const topic = `/topic/newpoint.${drawingId}/${authorInput}/${selectedBlueprint.name}`;
-
+    const polygonTopic = `/topic/newpolygon.${drawingId}/${authorInput}/${selectedBlueprint.name}`;
     const socket = new SockJS("http://localhost:8080/stompendpoint");
     const client = new Client({
       webSocketFactory: () => socket,
@@ -71,12 +75,29 @@ export default function AuthorForm() {
             console.error("Error parsing message:", e);
           }
         });
+        client.subscribe(polygonTopic, (message) => {
+          try {
+            const receivedPolygonPoints = JSON.parse(message.body);
+            console.log("Received polygon:", receivedPolygonPoints);
+            setSelectedBlueprint((prevBP) => {
+            if (!prevBP) return prevBP;
+            const updatedBP = { ...prevBP, points: receivedPolygonPoints };
+            blueprint.setCurrentBlueprint(updatedBP);
+            return updatedBP;
+          });
+          } catch (e) {
+            console.error("Error parsing polygon message:", e);
+          }
+        });
+        
         setIsConnected(true); 
       },
       onStompError: (frame) => {
         console.error("STOMP connection error:", frame);
       },
     });
+
+    
     client.activate();
     setStompClient(client);
   };
@@ -193,6 +214,7 @@ export default function AuthorForm() {
           </button>
         </div>
       </div>
+      {/* <Canva polygonPoints={polygonPoints} sendPoint={sendPoint} /> */}
       <Table
         blueprints={blueprintsList}
         totalOfPoints={totalPoints}

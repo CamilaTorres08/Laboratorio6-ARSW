@@ -16,6 +16,7 @@ const Canva = ({ blueprint, updatePoints, sendPoint}) => {
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
+  
 
   const handlePointer = (event) => {
     const canvas = canvasRef.current;
