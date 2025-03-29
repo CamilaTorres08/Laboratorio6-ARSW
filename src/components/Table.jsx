@@ -5,6 +5,7 @@ import Form from './Form';
 export default function Table({ blueprints, totalOfPoints, author, saveBlueprint, blueprintModule, createBlueprint, deleteBlueprint, sendPoint, onBlueprintSelect, selectedBlueprint }) {
     const [selectedBP,setBP] = useState();
     const [isNew, setIsNew] = useState(false);
+    
 
     const handleclick = async (bp) => { // <- Haz la función asíncrona
         try {

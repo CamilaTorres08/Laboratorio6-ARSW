@@ -17,92 +17,71 @@ export default function AuthorForm() {
   const selectedBlueprintRef = useRef();
   const [blueprintsList, setBlueprintsList] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
- // const [selectetBP, setBP] = useState(null);
+  const [drawingId, setDrawingId] = useState("");
+  const [isConnected, setIsConnected] = useState(false);  // Para controlar la conexión
 
-  //useEffect(() => {
-  //  if (selectetBP !== null) {
-   //   console.log("Blueprint seleccionado2:", selectetBP)
-   //   setSelectedBlueprint([selectetBP]);
-   // }
-  //}, [selectetBP]);
-  // Cuando se tenga un autor y un blueprint seleccionado, se construye el tópico dinámico.
+  const handleDrawingIdChange = (event) => {
+    setDrawingId(event.target.value);
+  };
   useEffect(() => {
-    if (authorInput && selectedBlueprint) {
-      // Normalizamos el nombre (por ejemplo, eliminando espacios)
-      const topic = `/topic/newpoint/${authorInput}/${selectedBlueprint.name}`;
+    if (authorInput && drawingId) {
+      const topic = `/topic/newpoint.${drawingId}`;
       setDynamicTopic(topic);
-      console.log("Dynamic topic actualizado:", topic);
+      console.log("Dynamic topic updated:", topic);
+    }
+  }, [authorInput, drawingId]);
+
+  const handleConnect = () => {
+    if (selectedBlueprint && drawingId) {
+      connectToStomp();
     } else {
-      setDynamicTopic(null);
+      alert("Please select a blueprint and enter a drawing ID");
     }
-  }, [authorInput, selectedBlueprint]);
-
-
-  // Inicia la conexión STOMP solo cuando dynamicTopic tenga valor.
-  useEffect(() => {
-    if (!dynamicTopic) {
-      console.log("No topic provided, no connection");
+  };
+  const connectToStomp = () => {
+    if (!drawingId) {
+      alert("Please enter a drawing ID");
       return;
     }
-    if (stompClient) {
-      console.log("Ya estamos conectados a STOMP, no es necesario reconectar.");
+    if (!selectedBlueprint) {
+      alert("Please select a blueprint before connecting");
       return;
     }
 
+    const topic = `/topic/newpoint.${drawingId}/${authorInput}/${selectedBlueprint.name}`;
 
-    console.log("Conectando a STOMP en topic:", dynamicTopic);
     const socket = new SockJS("http://localhost:8080/stompendpoint");
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
       onConnect: (frame) => {
-        console.log("Conectado a STOMP:", frame);
-            // Desuscribirse de cualquier suscripción anterior
-            if (stompClient && stompClient.connected) {
-              console.log("Ya estamos conectados a STOMP, no es necesario reconectar.");
-              return;
-            }
-        client.subscribe(dynamicTopic, (message) => {
+        console.log("Connected to STOMP on topic:", topic);
+        client.subscribe(topic, (message) => {
           try {
+            console.log("entre a lo de subscribir");
             const newPoint = JSON.parse(message.body);
-            setSelectedBlueprint(prevBP => {
+            setSelectedBlueprint((prevBP) => {
               if (!prevBP) return prevBP;
               const updatedPoints = [...prevBP.points, newPoint];
               const updatedBP = { ...prevBP, points: updatedPoints };
-              blueprint.setCurrentBlueprint(updatedBP); // Sincronizar módulo
+              blueprint.setCurrentBlueprint(updatedBP);
               return updatedBP;
             });
           } catch (e) {
-            console.error("Error al parsear el mensaje:", e);
+            console.error("Error parsing message:", e);
           }
         });
+        setIsConnected(true); 
       },
-      
       onStompError: (frame) => {
-        console.error("Error en STOMP:", frame);
+        console.error("STOMP connection error:", frame);
       },
     });
-    console.log("active al cliente")
     client.activate();
     setStompClient(client);
-
-    return () => {
-      console.log("Desactivando STOMP");
-      client.deactivate();
-      setStompClient(null);
-    };
-  }, [dynamicTopic]);
-
-  // Función para enviar un punto vía STOMP.
-  // Se usará para publicar cada punto (por ejemplo, desde el canvas).
+  };
   const sendPoint = (x, y) => {
-    console.log("Estado actual:", {
-      stompClient: stompClient?.connected,
-      author: authorInput,
-      blueprint: selectedBlueprint,
-    });
-  
-    if (stompClient?.connected && authorInput && selectedBlueprint) {
+    if (stompClient?.connected && authorInput && drawingId) {
       const pointMessage = {
         author: authorInput,
         name: selectedBlueprint.name,
@@ -110,20 +89,19 @@ export default function AuthorForm() {
         y,
       };
       stompClient.publish({
-        destination: `/app/newpoint/${authorInput}/${selectedBlueprint.name}`,
+        destination: `/app/newpoint.${drawingId}/${authorInput}/${selectedBlueprint.name}`,
         body: JSON.stringify(pointMessage),
       });
-      console.log("Punto enviado:", pointMessage);
+      console.log("Point sent:", pointMessage);
     } else {
-      console.error("Error al enviar punto. Verifica:", {
+      console.error("Error sending point. Verify:", {
         stompClient: !!stompClient,
         author: authorInput,
-        blueprint: !!selectedBlueprint,
+        drawingId: !!drawingId,
       });
     }
   };
 
-  // Actualiza el estado del input del autor.
   const handleInputChange = (event) => {
     setAuthorInput(event.target.value);
   };
@@ -149,7 +127,6 @@ export default function AuthorForm() {
     }
   }, [selectedBlueprint]); 
 
-  // Función para obtener la lista de blueprints del autor.
   const getBlueprints = async () => {
     blueprint.setAuthor(authorInput);
     await blueprint.getBlueprint(putTable);
@@ -195,10 +172,31 @@ export default function AuthorForm() {
           </button>
         </div>
       </div>
+            {/* Agregamos el campo para drawingId */}
+            <div className="row align-items-center mt-2">
+        <div className="col-lg-6 d-flex align-items-center">
+          <label htmlFor="drawingId" className="col-form-label col-form-label-lg me-2">
+            Drawing ID
+          </label>
+          <input
+            type="number"
+            className="form-control form-control-lg w-100"
+            id="drawingId"
+            placeholder="Enter drawing ID"
+            value={drawingId}
+            onChange={handleDrawingIdChange}
+          />
+        </div>
+        <div className="col-auto">
+          <button type="button" className="btn btn-success" onClick={handleConnect} disabled={isConnected}>
+            {isConnected ? "Connected" : "Connect"}
+          </button>
+        </div>
+      </div>
       <Table
         blueprints={blueprintsList}
-        totalOfPoints={totalPoints} // <- Usa totalPoints (estado)
-        author={authorInput} // <- Usa authorInput (estado)
+        totalOfPoints={totalPoints}
+        author={authorInput} 
         saveBlueprint={saveBP}
         blueprintModule={blueprint}
         createBlueprint={createNewBP}
